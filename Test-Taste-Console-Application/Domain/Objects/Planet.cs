@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Test_Taste_Console_Application.Domain.DataTransferObjects;
 
 namespace Test_Taste_Console_Application.Domain.Objects
@@ -10,9 +11,20 @@ namespace Test_Taste_Console_Application.Domain.Objects
         public string Id { get; set; }
         public float SemiMajorAxis { get; set; }
         public ICollection<Moon> Moons { get; set; }
-        public float AverageMoonGravity
+
+        public float AverageMoonGravity => 0.0f;
+
+        public float? AverageMoonTemperature
         {
-            get => 0.0f;
+            get
+            {
+                var temperatures = Moons
+                    .Where(m => m.Temperature.HasValue)
+                    .Select(m => m.Temperature.Value)
+                    .ToList();
+
+                return temperatures.Any() ? temperatures.Average() : (float?)null;
+            }
         }
 
         public Planet(PlanetDto planetDto)

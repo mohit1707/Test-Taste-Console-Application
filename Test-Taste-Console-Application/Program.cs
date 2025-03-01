@@ -32,9 +32,10 @@ namespace Test_Taste_Console_Application
 
             try
             {
-                screenOutputService.OutputAllPlanetsAndTheirAverageMoonGravityToConsole();
+                screenOutputService.OutputAllPlanetsAndTheirAverageMoonTemperatureToConsole();
                 screenOutputService.OutputAllMoonsAndTheirMassToConsole();
                 screenOutputService.OutputAllPlanetsAndTheirMoonsToConsole();
+                screenOutputService.OutputCombinedDataToConsoleAndFile();
             }
             catch (Exception exception)
             {
