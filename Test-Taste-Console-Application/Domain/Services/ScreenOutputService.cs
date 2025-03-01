@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using Test_Taste_Console_Application.Constants;
 using Test_Taste_Console_Application.Domain.Objects;
@@ -23,7 +24,7 @@ namespace Test_Taste_Console_Application.Domain.Services
         public void OutputAllPlanetsAndTheirMoonsToConsole()
         {
             //The service gets all the planets from the API.
-            var planets = _planetService.GetAllPlanets().ToArray();
+            var planets = _planetService.GetAllPlanets().Where(p => p.Moons.Any()).ToArray();
 
             //If the planets aren't found, then the function stops and tells that to the user via the console.
             if (!planets.Any())
@@ -143,47 +144,83 @@ namespace Test_Taste_Console_Application.Domain.Services
              */
         }
 
-        public void OutputAllPlanetsAndTheirAverageMoonGravityToConsole()
+
+        public void OutputAllPlanetsAndTheirAverageMoonTemperatureToConsole()
         {
-            //The function works the same way as the PrintAllPlanetsAndTheirMoonsToConsole function. You can find more comments there.
             var planets = _planetService.GetAllPlanets().ToArray();
             if (!planets.Any())
             {
-                Console.WriteLine(OutputString.NoMoonsFound);
+                Console.WriteLine(OutputString.NoPlanetsFound);
                 return;
             }
 
-            var columnSizes = new[] { 20, 30 };
+            var columnSizes = new[] { 20, 30, 30 };
             var columnLabels = new[]
             {
-                OutputString.PlanetId, OutputString.PlanetMoonAverageGravity
+                OutputString.PlanetNumber, OutputString.PlanetId, OutputString.AverageMoonTemperature
             };
-
 
             ConsoleWriter.CreateHeader(columnLabels, columnSizes);
 
-            foreach(Planet planet in planets)
+            for (int i = 0, j = 1; i < planets.Length; i++, j++)
             {
-                if(planet.HasMoons())
-                {
-                    ConsoleWriter.CreateText(new string[] { $"{planet.Id}", $"{planet.AverageMoonGravity}" }, columnSizes);
-                }
-                else
-                {
-                    ConsoleWriter.CreateText(new string[] { $"{planet.Id}", $"-" }, columnSizes);
-                }
+                var moons = planets[i].Moons;
+                var averageTemperature = moons.Any() && moons.Any(moon => moon.Temperature.HasValue)
+                    ? moons.Where(moon => moon.Temperature.HasValue).Average(moon => moon.Temperature.Value).ToString("F2")
+                    : "-";
+
+                ConsoleWriter.CreateText(new[] { j.ToString(), planets[i].Id, averageTemperature }, columnSizes);
             }
 
             ConsoleWriter.CreateLine(columnSizes);
             ConsoleWriter.CreateEmptyLines(2);
-            
+
             /*
                 --------------------+--------------------------------------------------
-                Planet's Number     |Planet's Average Moon Gravity
+                Planet's Id     |Planet's Average Moon Temprature
                 --------------------+--------------------------------------------------
-                1                   |0.0f
+                1                   |0.00
                 --------------------+--------------------------------------------------
             */
         }
+
+        public void OutputCombinedDataToConsoleAndFile()
+        {
+            // File to store the combined output
+            string filePath = "output.txt";
+
+            // Clear previous content
+            File.WriteAllText(filePath, "");
+
+            // Capture console output
+            using (var fileWriter = new StreamWriter(filePath, true))
+            using (var consoleWriter = new StringWriter())
+            {
+                var originalConsoleOut = Console.Out;
+
+                try
+                {
+                    // Redirect console output to both file and a string writer
+                    Console.SetOut(consoleWriter);
+
+                    // Call all methods — their output will go to consoleWriter
+                    OutputAllPlanetsAndTheirMoonsToConsole();
+                    OutputAllMoonsAndTheirMassToConsole();
+                    OutputAllPlanetsAndTheirAverageMoonTemperatureToConsole();
+
+                    // Write everything to file
+                    fileWriter.Write(consoleWriter.ToString());
+                }
+                finally
+                {
+                    // Restore console output
+                    Console.SetOut(originalConsoleOut);
+                }
+            }
+
+            // Confirm that data is saved
+            Console.WriteLine("Data has been combined and saved to output.txt");
+        }
+
     }
 }

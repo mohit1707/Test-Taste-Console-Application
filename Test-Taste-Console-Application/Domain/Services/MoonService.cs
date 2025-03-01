@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Newtonsoft.Json;
 using Test_Taste_Console_Application.Constants;
 using Test_Taste_Console_Application.Domain.DataTransferObjects;
@@ -43,12 +44,19 @@ namespace Test_Taste_Console_Application.Domain.Services
             //The JSON converter can return a null object. 
             if (results == null) return new Collection<Moon>();
 
-            foreach(MoonDto moonDto in results.Bodies)
+            foreach (MoonDto moonDto in results.Bodies)
             {
                 allMoons.Add(new Moon(moonDto));
             }
 
             return allMoons;
+        }
+        public float? CalculateAverageTemperature(IEnumerable<Moon> moons)
+        {
+            var validMoons = moons.Where(m => m.Temperature.HasValue);
+            if (!validMoons.Any()) return null;
+
+            return validMoons.Average(m => m.Temperature.Value);
         }
     }
 }

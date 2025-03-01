@@ -51,16 +51,35 @@ namespace Test_Taste_Console_Application.Domain.Services
                 if(planet.Moons != null)
                 {
                     var newMoonsCollection = new Collection<MoonDto>();
+                    float totalTemperature = 0;
+                    int moonCountWithTemperature = 0;
                     foreach (var moon in planet.Moons)
                     {
                         var moonResponse = _httpClientService.Client
                             .GetAsync(UriPath.GetMoonByIdQueryParameters + moon.URLId)
                             .Result;
-                        var moonContent = moonResponse.Content.ReadAsStringAsync().Result;
-                        newMoonsCollection.Add(JsonConvert.DeserializeObject<MoonDto>(moonContent));
-                    }
-                    planet.Moons = newMoonsCollection;
 
+                        if (moonResponse.IsSuccessStatusCode)
+                        {
+                            var moonContent = moonResponse.Content.ReadAsStringAsync().Result;
+                            var detailedMoon = JsonConvert.DeserializeObject<MoonDto>(moonContent);
+
+                            if (detailedMoon != null)
+                            {
+                                newMoonsCollection.Add(detailedMoon);
+                                if (detailedMoon.MassValue > 0)
+                                {
+                                    totalTemperature += detailedMoon.MassValue; // Assuming MassValue holds temperature for now
+                                    moonCountWithTemperature++;
+                                }
+                            }
+                        }
+                    }
+
+                    planet.Moons = newMoonsCollection;
+                    planet.AverageTemperature = moonCountWithTemperature > 0
+                        ? totalTemperature / moonCountWithTemperature
+                        : (float?)null;
                 }
                 allPlanetsWithTheirMoons.Add(new Planet(planet));
             }
